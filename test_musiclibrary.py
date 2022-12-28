@@ -29,7 +29,7 @@ def test_Playlist():
 
 def test_Library():
     print('iTunes Music library reader test')
-    library = Library('iTunes Music Library.xml')
+    library = Library('Test/iTunes Music Library.xml')
     # Songs
     song = library.songs[3]
     assert song.id == 2187
@@ -41,16 +41,23 @@ def test_Library():
     assert song.year == 2002
     assert song.genre == 'Garage rock'
     assert song.rating == 60
-    for song in library.songs:
-        if song.id == 4801:
-            assert song.discnumber == 1
+    song = library.songs[9]
+    assert song.id == 4801
+    assert song.title == 'Ständchen'
+    assert song.artist == 'Schubert'
+    assert song.album == 'Schwanengesang'
+    assert song.tracknumber == 4
+    assert song.discnumber == 1
+    assert song.year == 1829
+    assert song.genre == 'Classical'
+    assert song.rating == 100
     # Playlists
     print('List of found playlists:')
     for index, playlist in enumerate(library.playlists):
         print(str(index) + ': ' + playlist.name)
-    playlist = library.playlists[6]
-    assert playlist.id == 12991
-    assert playlist.name == 'Christmas'
-    assert playlist.getLength() == 9
-    assert playlist.getSongs()[1].id == 4613
-    assert playlist.getSongs()[1].title == 'Can\'t take my eyes off you'
+    playlist = library.playlists[1]
+    assert playlist.id == 13635
+    assert playlist.name == 'Lista Green Day'
+    assert playlist.getLength() == 4
+    assert playlist.getSongs()[1].id == 2183
+    assert playlist.getSongs()[1].title == 'All the Time'
