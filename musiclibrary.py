@@ -9,6 +9,7 @@ class Song:
     album: str = None  # Album name
     albumartist: str = None  # Album artist
     tracknumber: int = None  # Track number in album
+    discnumber: int = None  # Disc number in album
     year: int = None  # Year number
     genre: str = None  # Song genre
     rating: int = 0  # Rating number (from 0 to 100)
@@ -23,7 +24,7 @@ class Song:
                 if key == 'rating':
                     assert metadata[key] == 0 or metadata[key] == 20 or metadata[key] == 40 or metadata[
                         key] == 60 or metadata[key] == 80 or metadata[key] == 100, 'Argument ' + key + ' is not a valid value.'
-                elif key in ['tracknumber', 'year', 'playcount']:
+                elif key in ['tracknumber', 'discnumber', 'year', 'playcount']:
                     assert type(metadata[key]) is int and metadata[key] >= 0, 'Argument ' + \
                         key + ' must be a positive integer number.'
                 else:
@@ -121,6 +122,10 @@ class Library:
                         metadata[index], 'Track Number')
                     if tracknumber is not None:
                         tracknumber = int(tracknumber)
+                    discnumber = getMetadata(
+                        metadata[index], 'Disc Number')
+                    if discnumber is not None:
+                        discnumber = int(discnumber)
                     year = getMetadata(metadata[index], 'Year')
                     if year is not None:
                         year = int(year)
@@ -132,7 +137,7 @@ class Library:
                     if playcount is not None:
                         playcount = int(playcount)
                     self.songs.append(Song(id=int(song_id.text), title=title, artist=artist, album=album, albumartist=albumartist,
-                                      tracknumber=tracknumber, year=year, genre=genre, rating=rating, playcount=playcount))
+                                      tracknumber=tracknumber, discnumber=discnumber, year=year, genre=genre, rating=rating, playcount=playcount))
                 # Playlists
                 playlists = getSection(
                     library.getroot().find('dict'), 'Playlists').findall('dict')

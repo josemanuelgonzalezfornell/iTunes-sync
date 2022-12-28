@@ -4,7 +4,7 @@ import unittest
 
 def test_Song():
     song = Song(id=0, title='Title', artist='Artist', album='Album',
-                tracknumber=1, genre='Genre', rating=40)
+                tracknumber=1, discnumber=2, genre='Genre', rating=40)
 
 
 def test_Playlist():
@@ -41,6 +41,9 @@ def test_Library():
     assert song.year == 2002
     assert song.genre == 'Garage rock'
     assert song.rating == 60
+    for song in library.songs:
+        if song.id == 4801:
+            assert song.discnumber == 1
     # Playlists
     print('List of found playlists:')
     for index, playlist in enumerate(library.playlists):
