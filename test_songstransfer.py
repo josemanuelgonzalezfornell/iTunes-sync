@@ -16,6 +16,6 @@ archivefinallocation = "./destination"
 # Original archive ubication
 originalarchivelocation = "./Test/Music"
 
-#songsTransferer(librarylocation, archivefinallocation, originalarchivelocation)
+songsTransferer(librarylocation, archivefinallocation, originalarchivelocation)
 
-playlistTransferer(librarylocation, archivefinallocation)
+#playlistTransferer(librarylocation, archivefinallocation)

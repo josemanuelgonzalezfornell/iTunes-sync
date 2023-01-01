@@ -12,7 +12,7 @@ specialcharacterstitle = r"\/|\\|&|\?|!|\*|@|\$|€|%|=|~|\[|\]|{|}|<|>|\^|´|�
 # Synchronize origin and destination folder
 
 
-def songsTransferer(librarylocation, archivefinallocation, originalarchivelocation):
+def songsTransferer(librarylocation, filefinallocation, originalfilelocation):
 
     # iTunes library to export
     library = Library(librarylocation)
@@ -42,12 +42,12 @@ def songsTransferer(librarylocation, archivefinallocation, originalarchivelocati
         file += tracknumber+" "+title+".mp3"
 
         # Corrovorate if the .mp3 archive exist in the final file, if not copy the archive
-        if exists(archivefinallocation+file) == False:
-            if exists(archivefinallocation+folder) == False:
-                makedirs(archivefinallocation+folder)
-                copy(originalarchivelocation+file, archivefinallocation+file)
+        if exists(filefinallocation+file) == False:
+            if exists(filefinallocation+folder) == False:
+                makedirs(filefinallocation+folder)
+                copy(originalfilelocation+file, filefinallocation+file)
             else:
-                copy(originalarchivelocation+file, archivefinallocation+file)
+                copy(originalfilelocation+file, filefinallocation+file)
 
 # Export playlist from origin to final folder
 
