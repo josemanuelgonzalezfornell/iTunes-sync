@@ -3,6 +3,8 @@
 __pycache__
 iTunes Music Library.xml
 Test
+Test/destination
 .pytest_cache
 destination
-test_songstransfer
+test_musiclibrary.py
+test_songstransfer.py
