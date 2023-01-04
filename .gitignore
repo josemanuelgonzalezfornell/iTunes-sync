@@ -1,10 +1,6 @@
 .vscode
 .DS_Store
 __pycache__
-iTunes Music Library.xml
-Test
-Test/destination
 .pytest_cache
-destination
-test_musiclibrary.py
-test_songstransfer.py
+Test
+test_*

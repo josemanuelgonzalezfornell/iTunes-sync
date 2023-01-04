@@ -1,4 +1,4 @@
-from songstransfer import *
+from songs_transfer import *
 from tkinter import *
 from tkinter import filedialog, messagebox
 from re import sub
@@ -13,7 +13,7 @@ def obtainOriginalPathAndSync():
         library = sub("iTunes Music Library.xml", "Music", librarylocation)
         filefinalpath = filedialog.askdirectory(
             title="Choose final folder", initialdir="./")
-        songsTransferer(librarylocation, filefinalpath, library)
+        songs_transfer(librarylocation, filefinalpath, library)
         messagebox.showinfo("Songs synchronized",
                             "Songs synchronized correctly")
 
@@ -26,7 +26,7 @@ def playlistsSync():
     if librarylocation != "":
         filefinalpath = filedialog.askdirectory(
             title="Choose final folder", initialdir="./")
-        playlistTransferer(librarylocation, filefinalpath)
+        playlist_transferer(librarylocation, filefinalpath)
         messagebox.showinfo("Playlists synhronized",
                             "Playlists synchronized correctly")
 
@@ -80,6 +80,6 @@ menubar.add_cascade(label="Action", menu=actionmenu)
 actionmenu.add_command(
     label="Sync songs files", command=lambda: obtainOriginalPathAndSync())
 actionmenu.add_command(
-    label="Sync playlists", command=lambda: playlistTransferer())
+    label="Sync playlists", command=lambda: playlist_transferer())
 
 mainloop()
