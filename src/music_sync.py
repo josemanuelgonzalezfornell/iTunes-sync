@@ -18,9 +18,9 @@ def sync_songs(library_path: str, source_path: str, destination_path: str) -> No
     """It syncs the destination folder to contains the songs files according to the source music library.
 
     Args:
-        library_path (str): Absolute file path to the source music library XML file.
-        source_path (str): Absolute folder path to the source music folder.
-        destination_path (str): Absolute folder path to the destination music folder.
+            library_path (str): Absolute file path to the source music library XML file.
+            source_path (str): Absolute folder path to the source music folder.
+            destination_path (str): Absolute folder path to the destination music folder.
     """
     # iTunes library to export
     library = Library(library_path)
@@ -30,23 +30,36 @@ def sync_songs(library_path: str, source_path: str, destination_path: str) -> No
         # File relative path
         file = get_file_path(song)
         # Check if the song file exists in the destination folder. If not, copy the song file.
-        if not exists(source_path + SEPARATOR + file):
-            if not exists(source_path + SEPARATOR + folder):
-                makedirs(source_path + SEPARATOR + folder)
-                copy(destination_path + SEPARATOR +
-                     file, source_path + SEPARATOR + file)
+        if not exists(destination_path + SEPARATOR + file):
+            if not exists(destination_path + SEPARATOR + folder):
+                makedirs(destination_path + SEPARATOR + folder)
+                copy(source_path + SEPARATOR +
+                     file, destination_path + SEPARATOR + file)
             else:
-                copy(destination_path + SEPARATOR +
-                     file, source_path + SEPARATOR + file)
-        # TODO Remove file if the song does not exist in the music library.
+                copy(source_path + SEPARATOR +
+                     file, destination_path + SEPARATOR + file)
+    for artist in listdir(destination_path):
+        for album in listdir(artist):
+            for song in listdir(album):
+                # Folder relative path
+                folder = get_folder_path(song)
+                # File relative path
+                file = get_file_path(song)
+                # Check if the song file exists in the destination folder. If not, copy the song file.
+                if not exists(source_path + SEPARATOR +
+                              folder):
+                    remove(destination_path + SEPARATOR +
+                           folder)
+                elif not exists(source_path + SEPARATOR + file):
+                    remove(destination_path + SEPARATOR + file)
 
 
 def sync_playlists(library_path: str, destination_path: str) -> None:
     """It updates the playlists in the destination folder according to the source music library.
 
     Args:
-        library_path (str): Absolute file path to the source music library XML file.
-        destination_path (str): Absolute folder path to the destination music folder.
+            library_path (str): Absolute file path to the source music library XML file.
+            destination_path (str): Absolute folder path to the destination music folder.
     """
     # Remove all prexisting playlists files from the destination folder
     for item in listdir(destination_path):
@@ -79,10 +92,10 @@ def get_folder_path(song: Song) -> str:
     """It gets the relative path of the song folder according to its metadata.
 
     Args:
-            song (Song): Object of Song class containing all metadata.
+                    song (Song): Object of Song class containing all metadata.
 
     Returns:
-            str: Path name to the song folder, relative to the music folder.
+                    str: Path name to the song folder, relative to the music folder.
     """
     # Artist without special characters
     artist = sub(SPECIAL_CHARACTERS_FOLDER + "|\.$", "_", song.artist)
@@ -97,10 +110,10 @@ def get_file_path(song: Song) -> str:
     """It gets the relative path of the song file according to its metadata.
 
     Args:
-        song (Song): object of Song class containing all metadata.
+            song (Song): object of Song class containing all metadata.
 
     Returns:
-        str: path name to the song file, relative to the music folder.
+            str: path name to the song file, relative to the music folder.
     """
     # Title without special characters
     title = sub(SPECIAL_CHARACTERS, "_", song.title)
