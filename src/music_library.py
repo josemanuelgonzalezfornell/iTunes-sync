@@ -9,17 +9,17 @@ class Song:
         """Constructor for Song class.
 
         Args:
-                id (int): ID unique number in the music library
-                title (str): Song title
-                artist (str): Artist name
-                album (str): Album name
-                album_artist (str): Album artist
-                track_number (int): Track number in album
-                disc_number (int): Disc number in album
-                year (int): Year number
-                genre (str): Song genre
-                rating (int): Rating number (from 0 to 100). Defaults to 0.
-                play_count (int): User play count. Defaults to 0.
+            id (int): ID unique number in the music library
+            title (str): Song title
+            artist (str): Artist name
+            album (str): Album name
+            album_artist (str): Album artist
+            track_number (int): Track number in album
+            disc_number (int): Disc number in album
+            year (int): Year number
+            genre (str): Song genre
+            rating (int): Rating number (from 0 to 100). Defaults to 0.
+            play_count (int): User play count. Defaults to 0.
         """
         assert type(
             id) is int and id >= 0, 'Song ID must be a positive integer number.'
@@ -56,9 +56,9 @@ class Playlist:
         """Constructor for Playlist class.
 
         Args:
-                id (int): ID unique number in the music library.
-                name (str): Playlist name.
-                songs (Song, optional): List of songs. Defaults to [].
+            id (int): ID unique number in the music library.
+            name (str): Playlist name.
+            songs (Song, optional): List of songs. Defaults to [].
         """
         self.id = id
         self.name = name
@@ -74,10 +74,10 @@ class Playlist:
         """It gets a Song object specified by its order index in the playlist.
 
         Args:
-                index (int): Order index in the playlist.
+            index (int): Order index in the playlist.
 
         Returns:
-                Song: Song object.
+            Song: Song object.
         """
         return self.get_songs()[index]
 
@@ -85,7 +85,7 @@ class Playlist:
         """It gets all songs in the playlist as a list object.
 
         Returns:
-                list: List of songs in the playlist.
+            list: List of songs in the playlist.
         """
         return self._Playlist__songs
 
@@ -93,8 +93,8 @@ class Playlist:
         """It adds a Song object to the playlist in the specified order index (or at the end if no index is specified).
 
         Args:
-                song (Song): Song object.
-                index (int, optional): Order index where the song is added. Defaults adds the song at the end of the playlist.
+            song (Song): Song object.
+            index (int, optional): Order index where the song is added. Defaults adds the song at the end of the playlist.
         """
         if index is None:
             self._Playlist__songs.append(song)
@@ -107,7 +107,7 @@ class Playlist:
         """It removes a song from the playlist by passing the Song object.
 
         Args:
-                song (Song): Song object to be removed from the playlist.
+            song (Song): Song object to be removed from the playlist.
         """
         self.remove_index(self.get_index(song))
 
@@ -115,10 +115,10 @@ class Playlist:
         """It gets the order index of a Song object in the playlist.
 
         Args:
-                song (Song): Song object
+            song (Song): Song object
 
         Returns:
-                int: Order index of the song in the playlist.
+            int: Order index of the song in the playlist.
         """
         for index in range(0, self.get_length()):
             if self._Playlist__songs[index] == song:
@@ -128,7 +128,7 @@ class Playlist:
         """It removes a song from the playlist by specifying the order index of the song in the playlist.
 
         Args:
-                index (int): Order index of the song in the playlist.
+            index (int): Order index of the song in the playlist.
         """
         del self._Playlist__songs[index]
 
@@ -136,7 +136,7 @@ class Playlist:
         """It returns the number of songs in the playlist.
 
         Returns:
-                int: Number of songs in the playlist.
+            int: Number of songs in the playlist.
         """
         return len(self._Playlist__songs)
 
@@ -149,8 +149,8 @@ class Library:
         """Constructor for Library class.
 
         Args:
-                filename (str, optional): File name of the music library XML file. Defaults to None, so an empty library is created.
-                source (str, optional): Application name that manages the music library XML file. Defaults to 'iTunes'.
+            filename (str, optional): File name of the music library XML file. Defaults to None, so an empty library is created.
+            source (str, optional): Application name that manages the music library XML file. Defaults to 'iTunes'.
         """
         def get_section(xml: ElementTree, key: str) -> ElementTree:
             """It returns the XML tag just after a key tag which includes a key value inside.
@@ -239,10 +239,10 @@ class Library:
         """It gets a Song object specified by its ID number in the library.
 
         Args:
-                id (int): ID number of the song in the library.
+            id (int): ID number of the song in the library.
 
         Returns:
-                Song: Song object.
+            Song: Song object.
         """
         for song in self.songs:
             if song.id == id:
