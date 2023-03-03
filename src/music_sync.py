@@ -39,22 +39,29 @@ def sync_songs(library: Library, source_path: str, destination_path: str) -> Non
         source_path (str): Absolute folder path to the source music folder.
         destination_path (str): Absolute folder path to the destination music folder.
     """
-    artists = set()  # Set of folder paths to library artists
-    albums = set()  # Set of folder paths to library albums
-    songs = set()  # Set of file paths to library songs
+    artists = set()  # List of folder paths to library artists
+    albums = {}  # List of folder paths to library albums
+    songs = {}  # List of file paths to library songs
     for song in library.songs:
-        # Folder relative path
-        folder = get_folder_path(song)
+        # Folder relative path to artist
+        artist = replace_path_characters(song.artist)
+        # Folder relative path to album
+        album = get_folder_path(song)
         # File relative path
         file = get_file_path(song)
         # Library folders
-        artists.add(replace_path_characters(song.artist))
-        albums.add(folder)
-        songs.add(file)
+        if not artist in albums:
+            albums[artist] = set()
+            songs[artist] = {}
+        if not album in songs[artist]:
+            songs[artist][album] = set()
+        artists.add(artist)
+        albums[artist].add(album)
+        songs[artist][album].add(file)
         # Check if the song file exists in the destination folder. If not, copy the song file.
         if not exists(destination_path + SEPARATOR + file):
-            if not exists(destination_path + SEPARATOR + folder):
-                create_dir(destination_path + SEPARATOR + folder)
+            if not exists(destination_path + SEPARATOR + album):
+                create_dir(destination_path + SEPARATOR + album)
                 copy(source_path + SEPARATOR +
                      file, destination_path + SEPARATOR + file)
             else:
@@ -68,13 +75,13 @@ def sync_songs(library: Library, source_path: str, destination_path: str) -> Non
         else:
             for album in dir(destination_path + SEPARATOR + artist):
                 album_path = artist + SEPARATOR + album
-                if not album_path in albums:
+                if not album_path in albums[artist]:
                     remove_tree(destination_path + SEPARATOR +
                                 album_path, ignore_errors=True)
                 else:
                     for song in dir(destination_path + SEPARATOR + album_path):
                         song_path = album_path + SEPARATOR + song
-                        if not song_path in songs:
+                        if not song_path in songs[artist][album_path]:
                             remove(destination_path + SEPARATOR + song_path)
 
 

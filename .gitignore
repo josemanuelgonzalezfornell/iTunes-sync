@@ -1,7 +1,8 @@
+build
+dist
+test
+test_*
 .vscode
 .DS_Store
 __pycache__
 .pytest_cache
-Project
-Test
-test_*
