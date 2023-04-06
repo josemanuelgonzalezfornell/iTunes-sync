@@ -248,6 +248,28 @@ class Library:
             if song.id == id:
                 return song
 
+    def get_artists_number(self) -> int:
+        """It gets the number of artists in the library.
+
+        Returns:
+            int: Number of artists.
+        """
+        artists = set()
+        for song in self.songs:
+            artists.add(song.artist)
+        return len(artists)
+
+    def get_albums_number(self) -> int:
+        """It gets the number of albums in the library.
+
+        Returns:
+            int: Number of albums.
+        """
+        albums = set()
+        for song in self.songs:
+            albums.add(song.album)
+        return len(albums)
+
 
 def read_XML(file_name: str) -> ElementTree:
     """It reads a XML file and returns a xml.etree.ElementTree.ElementTree object with the XML content.
