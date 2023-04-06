@@ -157,7 +157,7 @@ def update_state() -> None:
     window['source']['content']['text'] = content
 
 
-def set_library(default: str) -> None:
+def set_library(default: str = None) -> None:
     """It opens a dialog to select the library XML file in the file system.
 
     Args:
@@ -170,7 +170,7 @@ def set_library(default: str) -> None:
     update_state()
 
 
-def set_folder(panel: str, default: str) -> str:
+def set_folder(panel: str, default: str = None) -> str:
     """It opens a dialog to select a folder in the file system.
 
     Args:
