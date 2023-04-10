@@ -11,11 +11,9 @@ from tkinter import ttk
 
 # Files
 SEPARATOR = '/'
-SONG_EXTENSION = '.mp3'
-PLAYLIST_EXTENSION = '.m3u'
+EXTENSION = '.m3u'
 # Special characters
-SPECIAL_CHARACTERS = r'\/|\\|&|\?|!|\*|@|\$|€|%|=|~|\[|\]|{|}|<|>|\^|´|’'
-SPECIAL_CHARACTERS_FOLDER = SPECIAL_CHARACTERS + '|\.$'
+SPECIAL_CHARACTERS = r'\/|\\|\?|\*|@|\$|€|=|:|~|\[|\]|{|}|<|>|\^|"|´|’'
 
 
 class Sync():
@@ -26,6 +24,7 @@ class Sync():
     # Absolute folder path to the destination music folder.
     destination_path: str = None
     window: set = None  # Graphical user interface object.
+    errors: set = []  # Songs and playlists that could not be synced.
 
     def __init__(self, library_path: str, source_path: str, destination_path: str, window: set = None) -> None:
         """It creates a sync process.
@@ -47,11 +46,11 @@ class Sync():
         """It syncs the the destination folder to contains the songs and playlists according to the source music library.
         """
         print('Syncing')
-        progress_weight = 0.5
+        progress_weight = 0.8
         self.set_progress(0)
         self.sync_songs(progress_weight)
         self.set_progress(50)
-        self.sync_playlists(progress_weight)
+        self.sync_playlists(1 - progress_weight)
         self.set_progress(100)
         print('Sync process completed')
 
@@ -62,15 +61,14 @@ class Sync():
             progress_weight (float, optional): Part of total that represents this sync process in the progress bar from the graphical user interface (1 means the whole progress bar and 0.5 means half of it).
         """
         print('Syncing songs')
-        increment_song = int(50 * progress_weight / len(self.library.songs))
-        increment_artist = int(50 * progress_weight /
-                               self.library.get_artists_number())
+        increment_song = 50 * progress_weight / len(self.library.songs)
+        increment_artist = 50 * progress_weight / self.library.get_artists_number()
         artists = set()  # List of folder paths to library artists
         albums = {}  # List of folder paths to library albums
         songs = {}  # List of file paths to library songs
         for song in self.library.songs:
             # Folder relative path to artist
-            artist = replace_path_characters(song.artist)
+            artist = replace_special_characters(song.artist)
             # Folder relative path to album
             album = get_folder_path(song)
             # File relative path
@@ -84,15 +82,26 @@ class Sync():
             artists.add(artist)
             albums[artist].add(album)
             songs[artist][album].add(file)
-            # Check if the song file exists in the destination folder. If not, copy the song file.
-            if not exists(self.destination_path + SEPARATOR + file):
-                if not exists(self.destination_path + SEPARATOR + album):
-                    create_dir(self.destination_path + SEPARATOR + album)
-                    copy(self.source_path + SEPARATOR +
-                         file, self.destination_path + SEPARATOR + file)
-                else:
-                    copy(self.source_path + SEPARATOR +
-                         file, self.destination_path + SEPARATOR + file)
+            # Check if the song file exists in the source folder. If not, add the song to the errors list.
+            if not exists(self.source_path + SEPARATOR + file):
+                self.errors.append(song)
+                print('Song not found in the source folder (' +
+                      self.source_path + SEPARATOR + file + ')')
+            else:
+                # Check if the song file exists in the destination folder. If not, copy the song file.
+                if not exists(self.destination_path + SEPARATOR + file):
+                    if not exists(self.destination_path + SEPARATOR + album):
+                        create_dir(self.destination_path + SEPARATOR + album)
+                        copy(self.source_path + SEPARATOR +
+                             file, self.destination_path + SEPARATOR + file)
+                    else:
+                        try:
+                            copy(self.source_path + SEPARATOR +
+                                 file, self.destination_path + SEPARATOR + file)
+                        except:
+                            self.errors.append(song)
+                            print('Song could not be copied (from ' + self.source_path + SEPARATOR +
+                                  file + 'to ' + self.destination_path + SEPARATOR + file + ')')
             # Update progress bar
             self.increment_progress(increment_song)
         # Destination clean
@@ -127,24 +136,29 @@ class Sync():
         # Remove all prexisting playlists files from the destination folder
         if exists(self.destination_path):
             for playlist in dir(self.destination_path):
-                if playlist.endswith(PLAYLIST_EXTENSION):
+                if playlist.endswith(EXTENSION):
                     remove(join(self.destination_path, playlist))
         else:
             create_dir(self.destination_path)
         # Create playlists files
         for playlist in self.library.playlists:
-            for song in playlist.get_songs():
-                # Artist without special characters
-                song_file = get_file_path(song)
-                # Create a playlist file only if it doesn't exist and add the song path to this file
-                if exists(self.destination_path + SEPARATOR + playlist.name + PLAYLIST_EXTENSION):
-                    mode = 'a'  # Editing mode
-                else:
-                    mode = 'w'  # Creation mode
-                playlist_file = open(
-                    self.destination_path + SEPARATOR + playlist.name + PLAYLIST_EXTENSION, mode)
-                playlist_file.write(song_file + '\n')
-                playlist_file.close()
+            try:
+                for song in playlist.get_songs():
+                    # Artist without special characters
+                    song_file = get_file_path(song)
+                    # Create a playlist file only if it doesn't exist and add the song path to this file
+                    if exists(self.destination_path + SEPARATOR + playlist.name + EXTENSION):
+                        mode = 'a'  # Editing mode
+                    else:
+                        mode = 'w'  # Creation mode
+                    playlist_file = open(
+                        self.destination_path + SEPARATOR + playlist.name + EXTENSION, mode)
+                    playlist_file.write(song_file + '\n')
+                    playlist_file.close()
+            except:
+                self.errors.append(playlist)
+                print('Playlist could not be created (' + self.destination_path +
+                      SEPARATOR + playlist.name + EXTENSION + ')')
             # Update progress bar
             self.increment_progress(increment_playlist)
         print('Playlist synced')
@@ -170,16 +184,16 @@ class Sync():
             self.window['root'].update()
 
 
-def replace_path_characters(directory: str) -> str:
-    """It replace special characters with character _ for using in path strings.
+def replace_special_characters(path: str) -> str:
+    """It replace special characters with character _ for using in file path strings.
 
     Args:
-        directory (str): String to be replaced.
+        path (str): String to be replaced.
 
     Returns:
         str: replaced string.
     """
-    return sub(SPECIAL_CHARACTERS_FOLDER + '|\.$', '_', directory)
+    return sub(SPECIAL_CHARACTERS, '_', sub(r'\/\.', '\_', path))
 
 
 def get_folder_path(song: Song) -> str:
@@ -192,12 +206,11 @@ def get_folder_path(song: Song) -> str:
         str: Path name to the song folder, relative to the music folder.
     """
     # Artist without special characters
-    artist = replace_path_characters(song.artist)
+    artist = sub(r'^\.|\.$', '_', replace_special_characters(song.artist))
     # Album without special characters
-    album = replace_path_characters(song.album)
-    # Create the folder path
-    path = artist + SEPARATOR + album
-    return path
+    album = sub(r'^\.|\.$', '_', replace_special_characters(song.album))
+    # Full folder path
+    return artist + SEPARATOR + album
 
 
 def get_file_path(song: Song) -> str:
@@ -209,16 +222,17 @@ def get_file_path(song: Song) -> str:
     Returns:
         str: Path name to the song file, relative to the music folder.
     """
-    # Title without special characters
-    title = sub(SPECIAL_CHARACTERS, '_', song.title)
+    # Disc number
+    disc_number = ''
+    if song.disc_number is not None:
+        disc_number = str(song.disc_number) + '-'
     # Track number with two digits
     track_number = ''
-    if song.track_number < 10:
-        track_number += '0'
-    track_number += str(song.track_number)
-    # Create the file path
-    path = get_folder_path(song) + SEPARATOR
-    if song.disc_number is not None:
-        path += str(song.disc_number) + '-'
-    path += track_number + ' ' + title + SONG_EXTENSION
-    return path
+    if song.track_number:
+        if song.track_number < 10:
+            track_number += '0'
+        track_number += str(song.track_number) + ' '
+    # Title without special characters
+    title = replace_special_characters(song.title)
+    # Full file path
+    return get_folder_path(song) + SEPARATOR + sub(r'^\.', '_', disc_number + track_number + title + '.' + song.format)

@@ -20,6 +20,7 @@ class Song:
             genre (str): Song genre
             rating (int): Rating number (from 0 to 100). Defaults to 0.
             play_count (int): User play count. Defaults to 0.
+            format (str): File format extension. Defaults to mp3.
         """
         assert type(
             id) is int and id >= 0, 'Song ID must be a positive integer number.'
@@ -34,6 +35,7 @@ class Song:
         self.genre = None
         self.rating = 0
         self.play_count = 0
+        self.format = 'mp3'
         for key in metadata:
             if metadata[key] is not None:
                 if key == 'rating':
@@ -214,8 +216,10 @@ class Library:
                     play_count = get_metadata(metadata[index], 'Play Count')
                     if play_count is not None:
                         play_count = int(play_count)
+                    format = get_metadata(
+                        metadata[index], 'Location').split('.')[-1]
                     self.songs.append(Song(id=int(song_id.text), title=title, artist=artist, album=album, album_artist=album_artist,
-                                           track_number=track_number, disc_number=disc_number, year=year, genre=genre, rating=rating, play_count=play_count))
+                                           track_number=track_number, disc_number=disc_number, year=year, genre=genre, rating=rating, play_count=play_count, format=format))
                 # Playlists
                 playlists = get_section(
                     library.getroot().find('dict'), 'Playlists').findall('dict')
