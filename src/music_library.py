@@ -2,8 +2,7 @@ import xml.etree.ElementTree as ElementTree
 
 
 class Song:
-    """Class for songs.
-    """
+    """Class for songs."""
 
     def __init__(self, id: int, **metadata) -> None:
         """Constructor for Song class.
@@ -22,8 +21,7 @@ class Song:
             play_count (int): User play count. Defaults to 0.
             format (str): File format extension. Defaults to mp3.
         """
-        assert type(
-            id) is int and id >= 0, 'Song ID must be a positive integer number.'
+        assert type(id) is int and id >= 0, "Song ID must be a positive integer number."
         self.id = id
         self.title = None
         self.artist = None
@@ -35,24 +33,31 @@ class Song:
         self.genre = None
         self.rating = 0
         self.play_count = 0
-        self.format = 'mp3'
+        self.format = "mp3"
         for key in metadata:
             if metadata[key] is not None:
-                if key == 'rating':
-                    assert metadata[key] == 0 or metadata[key] == 20 or metadata[key] == 40 or metadata[
-                        key] == 60 or metadata[key] == 80 or metadata[key] == 100, 'Argument ' + key + ' is not a valid value.'
-                elif key in ['track_number', 'disc_number', 'year', 'play_count']:
-                    assert type(metadata[key]) is int and metadata[key] >= 0, 'Argument ' + \
-                        key + ' must be a positive integer number.'
+                if key == "rating":
+                    assert (
+                        metadata[key] == 0
+                        or metadata[key] == 20
+                        or metadata[key] == 40
+                        or metadata[key] == 60
+                        or metadata[key] == 80
+                        or metadata[key] == 100
+                    ), ("Argument " + key + " is not a valid value.")
+                elif key in ["track_number", "disc_number", "year", "play_count"]:
+                    assert type(metadata[key]) is int and metadata[key] >= 0, (
+                        "Argument " + key + " must be a positive integer number."
+                    )
                 else:
-                    assert type(metadata[key]) is str, 'Argument ' + \
-                        key + ' must be a string.'
+                    assert type(metadata[key]) is str, (
+                        "Argument " + key + " must be a string."
+                    )
                 setattr(self, key, metadata[key])
 
 
 class Playlist:
-    """Class for playlists.
-    """
+    """Class for playlists."""
 
     def __init__(self, id: int, name: str, songs: list = []) -> None:
         """Constructor for Playlist class.
@@ -66,10 +71,13 @@ class Playlist:
         self.name = name
         self.__songs = songs
         if songs is not None:
-            assert type(
-                songs) is list, 'Argument songs must be a list that contains only Song objects.'
+            assert (
+                type(songs) is list
+            ), "Argument songs must be a list that contains only Song objects."
             for song in songs:
-                assert song.__class__.__name__ == 'Song', 'Argument songs must be a list that contains only Song objects.'
+                assert (
+                    song.__class__.__name__ == "Song"
+                ), "Argument songs must be a list that contains only Song objects."
             self._Playlist__songs = songs
 
     def get_song(self, index: int) -> Song:
@@ -102,7 +110,8 @@ class Playlist:
             self._Playlist__songs.append(song)
         else:
             assert 0 <= index and index < len(
-                self._Playlist__songs), 'Index must be bewteen 0 and playlist length'
+                self._Playlist__songs
+            ), "Index must be bewteen 0 and playlist length"
             self._Playlist__songs.insert(index, song)
 
     def remove_song(self, song: Song) -> None:
@@ -144,16 +153,16 @@ class Playlist:
 
 
 class Library:
-    """Class for music library.
-    """
+    """Class for music library."""
 
-    def __init__(self, file_name: str = None, source: str = 'iTunes') -> None:
+    def __init__(self, file_name: str = None, source: str = "iTunes") -> None:
         """Constructor for Library class.
 
         Args:
             filename (str, optional): File name of the music library XML file. Defaults to None, so an empty library is created.
             source (str, optional): Application name that manages the music library XML file. Defaults to 'iTunes'.
         """
+
         def get_section(xml: ElementTree, key: str) -> ElementTree:
             """It returns the XML tag just after a key tag which includes a key value inside.
 
@@ -164,7 +173,7 @@ class Library:
             Returns:
                 ElementTree: XML section inside the XML content to be returned.
             """
-            for index, value in enumerate(xml.findall('key')):
+            for index, value in enumerate(xml.findall("key")):
                 if value.text == key:
                     return xml[2 * index + 1]
 
@@ -187,57 +196,73 @@ class Library:
         self.file_name = file_name
         if self.file_name is not None:
             library = read_XML(self.file_name)
-            if source == 'iTunes':
+            if source == "iTunes":
                 # Songs
-                songs = get_section(library.getroot().find('dict'), 'Tracks')
-                ids = songs.findall('key')
-                metadata = songs.findall('dict')
+                songs = get_section(library.getroot().find("dict"), "Tracks")
+                ids = songs.findall("key")
+                metadata = songs.findall("dict")
                 for index, song_id in enumerate(ids):
-                    title = get_metadata(metadata[index], 'Name')
-                    artist = get_metadata(metadata[index], 'Artist')
-                    album = get_metadata(metadata[index], 'Album')
-                    album_artist = get_metadata(
-                        metadata[index], 'Album Artist')
-                    track_number = get_metadata(
-                        metadata[index], 'Track Number')
+                    title = get_metadata(metadata[index], "Name")
+                    artist = get_metadata(metadata[index], "Artist")
+                    album = get_metadata(metadata[index], "Album")
+                    album_artist = get_metadata(metadata[index], "Album Artist")
+                    track_number = get_metadata(metadata[index], "Track Number")
                     if track_number is not None:
                         track_number = int(track_number)
-                    disc_number = get_metadata(
-                        metadata[index], 'Disc Number')
+                    disc_number = get_metadata(metadata[index], "Disc Number")
                     if disc_number is not None:
                         disc_number = int(disc_number)
-                    year = get_metadata(metadata[index], 'Year')
+                    year = get_metadata(metadata[index], "Year")
                     if year is not None:
                         year = int(year)
-                    genre = get_metadata(metadata[index], 'Genre')
-                    rating = get_metadata(metadata[index], 'Rating')
+                    genre = get_metadata(metadata[index], "Genre")
+                    rating = get_metadata(metadata[index], "Rating")
                     if rating is not None:
                         rating = int(rating)
-                    play_count = get_metadata(metadata[index], 'Play Count')
+                    play_count = get_metadata(metadata[index], "Play Count")
                     if play_count is not None:
                         play_count = int(play_count)
-                    format = get_metadata(
-                        metadata[index], 'Location').split('.')[-1]
-                    self.songs.append(Song(id=int(song_id.text), title=title, artist=artist, album=album, album_artist=album_artist,
-                                           track_number=track_number, disc_number=disc_number, year=year, genre=genre, rating=rating, play_count=play_count, format=format))
+                    format = get_metadata(metadata[index], "Location").split(".")[-1]
+                    self.songs.append(
+                        Song(
+                            id=int(song_id.text),
+                            title=title,
+                            artist=artist,
+                            album=album,
+                            album_artist=album_artist,
+                            track_number=track_number,
+                            disc_number=disc_number,
+                            year=year,
+                            genre=genre,
+                            rating=rating,
+                            play_count=play_count,
+                            format=format,
+                        )
+                    )
                 # Playlists
                 playlists = get_section(
-                    library.getroot().find('dict'), 'Playlists').findall('dict')
+                    library.getroot().find("dict"), "Playlists"
+                ).findall("dict")
                 for index, playlist in enumerate(playlists):
-                    items = get_section(playlist, 'Playlist Items')
+                    items = get_section(playlist, "Playlist Items")
                     if items:
-                        playlist_name = get_metadata(playlist, 'Name')
-                        if not playlist_name in ['Library', 'Downloaded', 'Music', 'Playlists', 'Rating']:
-                            playlist_id = int(get_metadata(
-                                playlist, 'Playlist ID'))
+                        playlist_name = get_metadata(playlist, "Name")
+                        if not playlist_name in [
+                            "Library",
+                            "Downloaded",
+                            "Music",
+                            "Playlists",
+                            "Rating",
+                        ]:
+                            playlist_id = int(get_metadata(playlist, "Playlist ID"))
                             playlist_songs = []  # Playlist songs
-                            songs = items.findall('dict')
+                            songs = items.findall("dict")
                             for song in songs:
-                                song_id = int(get_metadata(
-                                    song, 'Track ID'))  # Song ID
+                                song_id = int(get_metadata(song, "Track ID"))  # Song ID
                                 playlist_songs.append(self.get_song(song_id))
                             self.playlists.append(
-                                Playlist(playlist_id, playlist_name, playlist_songs))
+                                Playlist(playlist_id, playlist_name, playlist_songs)
+                            )
 
     def get_song(self, id: int) -> Song:
         """It gets a Song object specified by its ID number in the library.
@@ -284,6 +309,6 @@ def read_XML(file_name: str) -> ElementTree:
     Returns:
         ElementTree: xml.etree.ElementTree.ElementTree object with the XML content.
     """
-    file = open(file_name, 'r')
+    file = open(file_name, "r")
     return ElementTree.parse(file_name)
     file.close()
