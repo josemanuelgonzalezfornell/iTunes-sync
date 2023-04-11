@@ -61,7 +61,7 @@ class Sync:
         self.errors = []
         self.set_progress(0)
         self.sync_songs(progress_weight)
-        self.set_progress(50)
+        self.set_progress(100 * progress_weight)
         self.sync_playlists(1 - progress_weight)
         self.set_progress(100)
         print("Sync process completed")
