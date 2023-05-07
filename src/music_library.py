@@ -1,4 +1,18 @@
 import xml.etree.ElementTree as ElementTree
+from urllib.parse import quote as str2url
+from urllib.parse import unquote as url2str
+from re import sub
+
+
+SEPARATOR = "/"  # Files
+SPECIAL_CHARACTERS = (
+    r'\/|\\|\?|\*|@|\$|€|=|:|~|\[|\]|{|}|<|>|\^|"|´|’'  # Special characters
+)
+SAFE_CHARACTERS = "'" + SEPARATOR  # Characters that will not be converted to URL format
+LANGUAGES = {
+    "source": ["iTunes", "Rhythmbox"],
+    "destination": ["Generic", "Rhythmbox"],
+}  # Library languages for XML files
 
 
 class Song:
@@ -37,13 +51,8 @@ class Song:
         for key in metadata:
             if metadata[key] is not None:
                 if key == "rating":
-                    assert (
-                        metadata[key] == 0
-                        or metadata[key] == 20
-                        or metadata[key] == 40
-                        or metadata[key] == 60
-                        or metadata[key] == 80
-                        or metadata[key] == 100
+                    assert type(metadata[key]) is int and metadata[key] in range(
+                        0, 6
                     ), ("Argument " + key + " is not a valid value.")
                 elif key in ["track_number", "disc_number", "year", "play_count"]:
                     assert type(metadata[key]) is int and metadata[key] >= 0, (
@@ -59,17 +68,23 @@ class Song:
 class Playlist:
     """Class for playlists."""
 
-    def __init__(self, id: int, name: str, songs: list = []) -> None:
+    def __init__(
+        self, id: int, name: str, songs: list = None, files: list = None
+    ) -> None:
         """Constructor for Playlist class.
 
         Args:
             id (int): ID unique number in the music library.
             name (str): Playlist name.
-            songs (Song, optional): List of songs. Defaults to [].
+            songs (list, optional): List of Song objects. Defaults to None.
+            files (list, optional): List of relative paths to song files. Defaults to None.
         """
+        if songs is None and files is None:
+            songs = []
         self.id = id
         self.name = name
         self.__songs = songs
+        self.__files = files
         if songs is not None:
             assert (
                 type(songs) is list
@@ -79,6 +94,15 @@ class Playlist:
                     song.__class__.__name__ == "Song"
                 ), "Argument songs must be a list that contains only Song objects."
             self._Playlist__songs = songs
+        elif files is not None:
+            assert (
+                type(files) is list
+            ), "Argument files must be a list that contains only strings."
+            for file in files:
+                assert (
+                    type(file) is str
+                ), "Argument files must be a list that contains only strings."
+            self._Playlist__files = files
 
     def get_song(self, index: int) -> Song:
         """It gets a Song object specified by its order index in the playlist.
@@ -149,19 +173,85 @@ class Playlist:
         Returns:
             int: Number of songs in the playlist.
         """
-        return len(self._Playlist__songs)
+        return len(self._Playlist__songs or self._Playlist__files)
+
+    def get_files(self, folder: str = None) -> list:
+        """It gets all file paths to songs in the playlist as a list object.
+
+        Args:
+            folder (str, optional): Music folder path. If no value is given, it returns as relative file paths. Defaults to None.
+
+        Returns:
+            list: List of file paths to songs files in the playlist.
+        """
+        if folder:
+            if folder[-1] != SEPARATOR:
+                folder += SEPARATOR
+        else:
+            folder = ""
+        # Songs
+        if not self.get_songs() is None:
+            files = []
+            for song in self.get_songs():
+                files.append(folder + get_file_path(song))
+        # Files
+        elif not self.__files is None:
+            files = []
+            for file in self.__files:
+                files.append(folder + file)
+        return files
+
+    def get_urls(self, folder: str) -> list:
+        """It gets all URL paths to songs in the playlist as a list object.
+
+        Args:
+            folder (str): Music folder path.
+
+        Returns:
+            list: List of URL paths to songs files in the playlist.
+        """
+        PROTOCOL = "file://"
+        if folder[-1] != SEPARATOR:
+            folder += SEPARATOR
+        # Songs
+        if not self.get_songs() is None:
+            urls = []
+            for song in self.get_songs():
+                urls.append(
+                    PROTOCOL
+                    + str2url(folder + get_file_path(song), safe=SAFE_CHARACTERS)
+                )
+        # Files
+        elif not self.__files is None:
+            urls = []
+            for file in self.__files:
+                urls.append(PROTOCOL + str2url(folder + file, safe=SAFE_CHARACTERS))
+        return urls
 
 
 class Library:
     """Class for music library."""
 
-    def __init__(self, file_name: str = None, source: str = "iTunes") -> None:
+    def __init__(self, files: list = [], language: str = "iTunes") -> None:
         """Constructor for Library class.
 
         Args:
-            filename (str, optional): File name of the music library XML file. Defaults to None, so an empty library is created.
-            source (str, optional): Application name that manages the music library XML file. Defaults to 'iTunes'.
+            files (list, optional): File name of the music library XML files. Defaults to empty list, so an empty library is created.
+            language (str, optional): Library language for the XML files. Defaults to 'iTunes'.
         """
+
+        def get_property(xml: ElementTree, key: str) -> ElementTree:
+            """It returns the value of a XML tag inside of another XML tag.
+
+            Args:
+                xml (ElementTree): Parent XML tag.
+                key (str): Children XML tag key.
+
+            Returns:
+                ElementTree: Value of the children XML tag.
+            """
+            if xml.find(key) is not None:
+                return xml.find(key).text
 
         def get_section(xml: ElementTree, key: str) -> ElementTree:
             """It returns the XML tag just after a key tag which includes a key value inside.
@@ -193,36 +283,36 @@ class Library:
 
         self.songs = []  # List of songs (objects of Song class)
         self.playlists = []  # List of playlists (objects of Playlist class)
-        self.file_name = file_name
-        if self.file_name is not None:
-            library = read_XML(self.file_name)
-            if source == "iTunes":
+        self.files = files
+        if self.files is not None:
+            if language == "iTunes":
+                library = read_XML(self.files[0])
                 # Songs
                 songs = get_section(library.getroot().find("dict"), "Tracks")
                 ids = songs.findall("key")
-                metadata = songs.findall("dict")
-                for index, song_id in enumerate(ids):
-                    title = get_metadata(metadata[index], "Name")
-                    artist = get_metadata(metadata[index], "Artist")
-                    album = get_metadata(metadata[index], "Album")
-                    album_artist = get_metadata(metadata[index], "Album Artist")
-                    track_number = get_metadata(metadata[index], "Track Number")
+                songs = songs.findall("dict")
+                for song, song_id in enumerate(ids):
+                    title = get_metadata(songs[song], "Name")
+                    artist = get_metadata(songs[song], "Artist")
+                    album = get_metadata(songs[song], "Album")
+                    album_artist = get_metadata(songs[song], "Album Artist")
+                    track_number = get_metadata(songs[song], "Track Number")
                     if track_number is not None:
                         track_number = int(track_number)
-                    disc_number = get_metadata(metadata[index], "Disc Number")
+                    disc_number = get_metadata(songs[song], "Disc Number")
                     if disc_number is not None:
                         disc_number = int(disc_number)
-                    year = get_metadata(metadata[index], "Year")
+                    year = get_metadata(songs[song], "Year")
                     if year is not None:
                         year = int(year)
-                    genre = get_metadata(metadata[index], "Genre")
-                    rating = get_metadata(metadata[index], "Rating")
+                    genre = get_metadata(songs[song], "Genre")
+                    rating = get_metadata(songs[song], "Rating")
                     if rating is not None:
-                        rating = int(rating)
-                    play_count = get_metadata(metadata[index], "Play Count")
+                        rating = int(int(rating) / 20)
+                    play_count = get_metadata(songs[song], "Play Count")
                     if play_count is not None:
                         play_count = int(play_count)
-                    format = get_metadata(metadata[index], "Location").split(".")[-1]
+                    format = get_metadata(songs[song], "Location").split(".")[-1]
                     self.songs.append(
                         Song(
                             id=int(song_id.text),
@@ -243,7 +333,7 @@ class Library:
                 playlists = get_section(
                     library.getroot().find("dict"), "Playlists"
                 ).findall("dict")
-                for index, playlist in enumerate(playlists):
+                for song, playlist in enumerate(playlists):
                     items = get_section(playlist, "Playlist Items")
                     if items:
                         playlist_name = get_metadata(playlist, "Name")
@@ -261,8 +351,60 @@ class Library:
                                 song_id = int(get_metadata(song, "Track ID"))  # Song ID
                                 playlist_songs.append(self.get_song(song_id))
                             self.playlists.append(
-                                Playlist(playlist_id, playlist_name, playlist_songs)
+                                Playlist(
+                                    playlist_id, playlist_name, songs=playlist_songs
+                                )
                             )
+            elif language == "Rhythmbox":
+                # Songs
+                songs = read_XML(self.files[0]).getroot().findall("entry")
+                for song_id, song in enumerate(songs):
+                    if song.attrib["type"] == "song":
+                        title = get_property(song, "title")
+                        artist = get_property(song, "artist")
+                        album = get_property(song, "album")
+                        track_number = get_property(song, "track-number")
+                        if track_number is not None:
+                            track_number = int(track_number)
+                        disc_number = get_property(song, "disc-number")
+                        if disc_number is not None:
+                            disc_number = int(disc_number)
+                        genre = get_property(song, "genre")
+                        rating = get_property(song, "rating")
+                        if rating is not None:
+                            rating = int(rating)
+                        play_count = get_property(song, "play-count")
+                        if play_count is not None:
+                            play_count = int(play_count)
+                        format = get_property(song, "location").split(".")[-1]
+                        self.songs.append(
+                            Song(
+                                id=int(song_id),
+                                title=title,
+                                artist=artist,
+                                album=album,
+                                track_number=track_number,
+                                disc_number=disc_number,
+                                genre=genre,
+                                rating=rating,
+                                play_count=play_count,
+                                format=format,
+                            )
+                        )
+                # Playlists
+                playlists = read_XML(self.files[1]).getroot().findall("playlist")
+                for playlist in playlists:
+                    playlist_name = playlist.attrib["name"]
+                    playlist_id = int(playlist.attrib["browser-position"])
+                    playlist_songs = []
+                    songs = playlist.findall("location")
+                    for song in songs:
+                        playlist_songs.append(
+                            SEPARATOR.join(url2str(song.text).split(SEPARATOR)[-3:])
+                        )
+                    self.playlists.append(
+                        Playlist(playlist_id, playlist_name, files=playlist_songs)
+                    )
 
     def get_song(self, id: int) -> Song:
         """It gets a Song object specified by its ID number in the library.
@@ -299,6 +441,80 @@ class Library:
             albums.add(song.album)
         return len(albums)
 
+    def get_playlist(self, name: str) -> Playlist:
+        """It gets a Playlist object specified by its name in the library.
+
+        Args:
+            name (str): Name of the playlist.
+
+        Returns:
+            Playlist: Playlist object.
+        """
+        for playlist in self.playlists:
+            if playlist.name == name:
+                return playlist
+
+
+# Music file system
+
+
+def replace_special_characters(path: str) -> str:
+    """It replace special characters with character _ for using in file path strings.
+
+    Args:
+        path (str): String to be replaced.
+
+    Returns:
+        str: replaced string.
+    """
+    return sub(SPECIAL_CHARACTERS, "_", sub(r"\/\.", "\_", path))
+
+
+def get_folder_path(song: Song) -> str:
+    """It gets the relative path of the song folder according to its metadata.
+
+    Args:
+        song (Song): Object of Song class containing all metadata.
+
+    Returns:
+        str: Path name to the song folder, relative to the music folder.
+    """
+    # Artist without special characters
+    artist = sub(r"^\.|\.$", "_", replace_special_characters(song.artist))
+    # Album without special characters
+    album = sub(r"^\.|\.$", "_", replace_special_characters(song.album))
+    # Full folder path
+    return artist + SEPARATOR + album
+
+
+def get_file_path(song: Song) -> str:
+    """It gets the relative path of the song file according to its metadata.
+
+    Args:
+        song (Song): Object of Song class containing all metadata.
+
+    Returns:
+        str: Path name to the song file, relative to the music folder.
+    """
+    # Disc number
+    disc_number = ""
+    if song.disc_number is not None:
+        disc_number = str(song.disc_number) + "-"
+    # Track number with two digits
+    track_number = ""
+    if song.track_number:
+        if song.track_number < 10:
+            track_number += "0"
+        track_number += str(song.track_number) + " "
+    # Title without special characters
+    title = replace_special_characters(song.title)
+    # Full file path
+    return (
+        get_folder_path(song)
+        + SEPARATOR
+        + sub(r"^\.", "_", disc_number + track_number + title + "." + song.format)
+    )
+
 
 def read_XML(file_name: str) -> ElementTree:
     """It reads a XML file and returns a xml.etree.ElementTree.ElementTree object with the XML content.
@@ -309,6 +525,7 @@ def read_XML(file_name: str) -> ElementTree:
     Returns:
         ElementTree: xml.etree.ElementTree.ElementTree object with the XML content.
     """
-    file = open(file_name, "r")
-    return ElementTree.parse(file_name)
+    file = open(file_name, mode="r", encoding="utf-8")
+    xml = ElementTree.parse(file_name)
     file.close()
+    return xml
