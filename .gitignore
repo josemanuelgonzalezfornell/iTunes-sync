@@ -6,4 +6,3 @@ test_*
 .DS_Store
 __pycache__
 .pytest_cache
-src/music_ratings.py
