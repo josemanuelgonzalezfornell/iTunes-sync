@@ -6,7 +6,6 @@ from os import remove
 from os import listdir as dir
 from shutil import copy2 as copy
 from shutil import rmtree as remove_tree
-from tkinter import ttk
 
 
 class Sync:
@@ -191,16 +190,20 @@ class Sync:
         for playlist in self.library.playlists:
             # Language = Generic
             if self.destination_playlists is None:
+                playlist_path = (
+                    self.destination_folder
+                    + SEPARATOR
+                    + replace_special_characters(playlist.name)
+                    + EXTENSION
+                )
                 try:
                     # Create a playlist file only if it doesn't exist and add the song path to this file
-                    if exists(
-                        self.destination_folder + SEPARATOR + playlist.name + EXTENSION
-                    ):
+                    if exists(playlist_path):
                         mode = "a"  # Editing mode
                     else:
                         mode = "w"  # Creation mode
                     playlist_file = open(
-                        self.destination_folder + SEPARATOR + playlist.name + EXTENSION,
+                        playlist_path,
                         mode=mode,
                         encoding=ENCODING,
                     )
@@ -208,19 +211,12 @@ class Sync:
                     playlist_file.close()
                 except:
                     self.errors.append(playlist)
-                    print(
-                        "Playlist could not be created ("
-                        + self.destination_folder
-                        + SEPARATOR
-                        + playlist.name
-                        + EXTENSION
-                        + ")"
-                    )
+                    print("Playlist could not be created (" + playlist_path + ")")
             # Language = Rhythmbox
             else:
                 playlist_file.write(
                     '\n  <playlist name="'
-                    + playlist.name
+                    + str2html(playlist.name)
                     + '" show-browser="true" browser-position="'
                     + str(playlist.id)
                     + '" search-type="search-match" type="static">'

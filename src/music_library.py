@@ -1,7 +1,9 @@
 import xml.etree.ElementTree as ElementTree
+from re import sub
+from html import escape as str2html
+from html import unescape as html2str
 from urllib.parse import quote as str2url
 from urllib.parse import unquote as url2str
-from re import sub
 
 
 SEPARATOR = "/"  # Files
@@ -394,7 +396,7 @@ class Library:
                 # Playlists
                 playlists = read_XML(self.files[1]).getroot().findall("playlist")
                 for playlist in playlists:
-                    playlist_name = playlist.attrib["name"]
+                    playlist_name = html2str(playlist.attrib["name"])
                     playlist_id = int(playlist.attrib["browser-position"])
                     playlist_songs = []
                     songs = playlist.findall("location")
