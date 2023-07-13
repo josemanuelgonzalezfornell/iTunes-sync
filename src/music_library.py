@@ -10,7 +10,9 @@ SEPARATOR = "/"  # Files
 SPECIAL_CHARACTERS = (
     r'\/|\\|\?|\*|@|\$|€|=|:|~|\[|\]|{|}|<|>|\^|"|´|’'  # Special characters
 )
-SAFE_CHARACTERS = "'" + SEPARATOR  # Characters that will not be converted to URL format
+SAFE_CHARACTERS = (
+    ",|&|'" + SEPARATOR
+)  # Characters that will not be converted to URL format
 LANGUAGES = {
     "source": ["iTunes", "Rhythmbox"],
     "destination": ["Generic", "Rhythmbox"],
@@ -221,7 +223,11 @@ class Playlist:
             for song in self.get_songs():
                 urls.append(
                     PROTOCOL
-                    + str2url(folder + get_file_path(song), safe=SAFE_CHARACTERS)
+                    + sub(
+                        r"&",
+                        "&amp;",
+                        str2url(folder + get_file_path(song), safe=SAFE_CHARACTERS),
+                    )
                 )
         # Files
         elif not self.__files is None:
