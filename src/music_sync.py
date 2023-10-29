@@ -84,7 +84,7 @@ class Sync:
         is_windows = get_os()[:7] == "Windows"
         for song in self.library.songs:
             # Folder relative path to artist
-            artist = replace_special_characters(song.artist)
+            artist = sub(r"^\.|\.$", "_", replace_special_characters(song.artist))
             # Folder relative path to album
             album = get_folder_path(song)
             # File relative path
