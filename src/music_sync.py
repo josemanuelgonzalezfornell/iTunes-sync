@@ -1,3 +1,4 @@
+from platform import platform as get_os
 from src.music_library import *
 from io import open
 from os.path import exists, join
@@ -40,6 +41,7 @@ class Sync:
             window (set, optional): Graphical user interface object.
         """
         self.library = Library(source_files, language=source_language)
+        self.source_language = source_language
         self.source_folder = source_folder
         self.destination_folder = destination_folder
         self.destination_playlists = destination_playlists
@@ -79,13 +81,17 @@ class Sync:
         artists = set()  # List of folder paths to library artists
         albums = {}  # List of folder paths to library albums
         songs = {}  # List of file paths to library songs
+        is_windows = get_os()[:7] == "Windows"
         for song in self.library.songs:
             # Folder relative path to artist
             artist = replace_special_characters(song.artist)
             # Folder relative path to album
             album = get_folder_path(song)
             # File relative path
-            file = get_file_path(song)
+            source_file = get_file_path(
+                song, self.source_language == "iTunes" and is_windows
+            )
+            destination_file = get_file_path(song)
             # Library folders
             if not artist in albums:
                 albums[artist] = set()
@@ -94,31 +100,31 @@ class Sync:
                 songs[artist][album] = set()
             artists.add(artist)
             albums[artist].add(album)
-            songs[artist][album].add(file)
+            songs[artist][album].add(destination_file)
             # Check if the song file exists in the source folder. If not, add the song to the errors list.
-            if not exists(self.source_folder + SEPARATOR + file):
+            if not exists(self.source_folder + SEPARATOR + source_file):
                 self.errors.append(song)
                 print(
                     "Song not found in the source folder ("
                     + self.source_folder
                     + SEPARATOR
-                    + file
+                    + source_file
                     + ")"
                 )
             else:
                 # Check if the song file exists in the destination folder. If not, copy the song file.
-                if not exists(self.destination_folder + SEPARATOR + file):
+                if not exists(self.destination_folder + SEPARATOR + destination_file):
                     if not exists(self.destination_folder + SEPARATOR + album):
                         create_dir(self.destination_folder + SEPARATOR + album)
                         copy(
-                            self.source_folder + SEPARATOR + file,
-                            self.destination_folder + SEPARATOR + file,
+                            self.source_folder + SEPARATOR + source_file,
+                            self.destination_folder + SEPARATOR + destination_file,
                         )
                     else:
                         try:
                             copy(
-                                self.source_folder + SEPARATOR + file,
-                                self.destination_folder + SEPARATOR + file,
+                                self.source_folder + SEPARATOR + source_file,
+                                self.destination_folder + SEPARATOR + destination_file,
                             )
                         except:
                             self.errors.append(song)
@@ -126,11 +132,11 @@ class Sync:
                                 "Song could not be copied (from "
                                 + self.source_folder
                                 + SEPARATOR
-                                + file
+                                + source_file
                                 + "to "
                                 + self.destination_folder
                                 + SEPARATOR
-                                + file
+                                + destination_file
                                 + ")"
                             )
             # Update progress bar

@@ -8,7 +8,7 @@ from urllib.parse import unquote as url2str
 
 SEPARATOR = "/"  # Files
 SPECIAL_CHARACTERS = (
-    r'\/|\\|\?|\*|@|\$|€|=|:|~|\[|\]|{|}|<|>|\^|"|´|’'  # Special characters
+    r'\/|\\|\?|\*|@|\$|€|=|:|;|~|\[|\]|{|}|<|>|\^|"|´|’'  # Special characters
 )
 SAFE_CHARACTERS = (
     ",|&|'" + SEPARATOR
@@ -478,28 +478,40 @@ def replace_special_characters(path: str) -> str:
     return sub(SPECIAL_CHARACTERS, "_", sub(r"\/\.", "\_", path))
 
 
-def get_folder_path(song: Song) -> str:
+def get_folder_path(song: Song, shortened: bool = False) -> str:
     """It gets the relative path of the song folder according to its metadata.
 
     Args:
         song (Song): Object of Song class containing all metadata.
+        shortened (bool, optional): If True, the path is shortened to 40 characters each directory level (it is necessary on Windows). Defaults to False.
 
     Returns:
         str: Path name to the song folder, relative to the music folder.
     """
+    artist = song.artist
+    album = song.album
+    # Shortened directory
+    if shortened:
+        artist = artist[:40]
+        if artist[-1] == " ":
+            artist = artist[:-1]
+        album = album[:40]
+        if album[-1] == " ":
+            album = album[:-1]
     # Artist without special characters
-    artist = sub(r"^\.|\.$", "_", replace_special_characters(song.artist))
+    artist = sub(r"^\.|\.$", "_", replace_special_characters(artist))
     # Album without special characters
-    album = sub(r"^\.|\.$", "_", replace_special_characters(song.album))
+    album = sub(r"^\.|\.$", "_", replace_special_characters(album))
     # Full folder path
     return artist + SEPARATOR + album
 
 
-def get_file_path(song: Song) -> str:
+def get_file_path(song: Song, shortened: bool = False) -> str:
     """It gets the relative path of the song file according to its metadata.
 
     Args:
         song (Song): Object of Song class containing all metadata.
+        shortened (bool, optional): If True, the path is shortened to 40 characters each directory level (it is necessary on Windows). Defaults to False.
 
     Returns:
         str: Path name to the song file, relative to the music folder.
@@ -514,14 +526,18 @@ def get_file_path(song: Song) -> str:
         if song.track_number < 10:
             track_number += "0"
         track_number += str(song.track_number) + " "
+    file_path = disc_number + track_number + song.title
+    # Shortened directory
+    if shortened:
+        file_path = file_path[: (40 - len(song.format) - 1)]
+        if file_path[-1] == " ":
+            file_path = file_path[:-1]
     # Title without special characters
-    title = replace_special_characters(song.title)
-    # Full file path
-    return (
-        get_folder_path(song)
-        + SEPARATOR
-        + sub(r"^\.", "_", disc_number + track_number + title + "." + song.format)
+    file_path = sub(
+        r"^\.", "_", replace_special_characters(file_path) + "." + song.format
     )
+    # Full file path
+    return get_folder_path(song, shortened) + SEPARATOR + file_path
 
 
 def read_XML(file_name: str) -> ElementTree:
